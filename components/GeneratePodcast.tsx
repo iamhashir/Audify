@@ -27,7 +27,7 @@ const useGeneratePodcast = ({
 	const generatePodcast = async () => {
 	  if (!voicePrompt) {
 		toast({
-		  title: "Please provide a voiceType to generate a podcast",
+		  title: "Please provide a voiceType to generate a Audio",
 		  variant: 'destructive',
 		});
 		return;
@@ -37,7 +37,7 @@ const useGeneratePodcast = ({
 	  setAudio('');
   
 	  try {
-		console.log('Starting to generate podcast audio...');
+		console.log('Starting to generate audio...');
 		const response = await getPodcastAudio({
 		  voice: voiceType,
 		  input: voicePrompt,
@@ -58,12 +58,12 @@ const useGeneratePodcast = ({
 		const audioUrl = await getAudioUrl({ storageId });
 		setAudio(audioUrl!);
 		toast({
-		  title: "Podcast generated successfully",
+		  title: "Audio generated successfully",
 		});
 	  } catch (error) {
-		console.error('Error generating podcast:', error);
+		console.error('Error generating Audio:', error);
 		toast({
-		  title: "Error creating a podcast",
+		  title: "Error creating a Audio",
 		  variant: 'destructive',
 		});
 	  } finally {
