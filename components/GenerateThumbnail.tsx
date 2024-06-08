@@ -19,9 +19,9 @@ const GenerateThumbnail = ({ setImage, setImageStorageId, image, imagePrompt, se
   const imageRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const { startUpload } = useUploadFiles(generateUploadUrl)
+  const { startUpload } = useUploadFiles(generateUploadUrl);
   const getImageUrl = useMutation(api.podcasts.getUrl);
-  const handleGenerateThumbnail = useAction(api.openai.generateThumbnailAction)
+  const handleGenerateThumbnail = useAction(api.openai.generateThumbnailAction);
 
   const handleImage = async (blob: Blob, fileName: string) => {
     setIsImageLoading(true);
@@ -37,42 +37,59 @@ const GenerateThumbnail = ({ setImage, setImageStorageId, image, imagePrompt, se
 
       const imageUrl = await getImageUrl({ storageId });
       setImage(imageUrl!);
-      setIsImageLoading(false);
       toast({
         title: "Thumbnail generated successfully",
-      })
+      });
     } catch (error) {
-      console.log(error)
-      toast({ title: 'Error generating thumbnail', variant: 'destructive'})
+      console.error('Error uploading image:', error);
+      toast({ title: 'Error generating thumbnail', variant: 'destructive' });
+    } finally {
+      setIsImageLoading(false);
     }
-  }
+  };
 
   const generateImage = async () => {
+    if (!imagePrompt) {
+      toast({
+        title: 'Please provide a prompt to generate a thumbnail',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsImageLoading(true);
+    setImage('');
+
     try {
       const response = await handleGenerateThumbnail({ prompt: imagePrompt });
       const blob = new Blob([response], { type: 'image/png' });
-      handleImage(blob, `thumbnail-${uuidv4()}`);
+      await handleImage(blob, `thumbnail-${uuidv4()}`);
     } catch (error) {
-      console.log(error)
-      toast({ title: 'Error generating thumbnail', variant: 'destructive'})
+      console.error('Error generating thumbnail:', error);
+      toast({ title: 'Error generating thumbnail', variant: 'destructive' });
+      setIsImageLoading(false);
     }
-  }
+  };
+
   const uploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
+
+    setIsImageLoading(true);
+    setImage('');
 
     try {
       const files = e.target.files;
       if (!files) return;
       const file = files[0];
-      const blob = await file.arrayBuffer()
-      .then((ab) => new Blob([ab]));
+      const blob = await file.arrayBuffer().then((ab) => new Blob([ab]));
 
-      handleImage(blob, file.name);
+      await handleImage(blob, file.name);
     } catch (error) {
-      console.log(error)
-      toast({ title: 'Error uploading image', variant: 'destructive'})
+      console.error('Error uploading image:', error);
+      toast({ title: 'Error uploading image', variant: 'destructive' });
+      setIsImageLoading(false);
     }
-  }
+  };
 
   return (
     <>
@@ -80,7 +97,7 @@ const GenerateThumbnail = ({ setImage, setImageStorageId, image, imagePrompt, se
         <Button
           type="button"
           variant="plain"
-          onClick={() => setIsAiThumbnail(true)} 
+          onClick={() => setIsAiThumbnail(true)}
           className={cn('', {
             'bg-black-6': isAiThumbnail
           })}
@@ -90,7 +107,7 @@ const GenerateThumbnail = ({ setImage, setImageStorageId, image, imagePrompt, se
         <Button
           type="button"
           variant="plain"
-          onClick={() => setIsAiThumbnail(false)} 
+          onClick={() => setIsAiThumbnail(false)}
           className={cn('', {
             'bg-black-6': !isAiThumbnail
           })}
@@ -104,7 +121,7 @@ const GenerateThumbnail = ({ setImage, setImageStorageId, image, imagePrompt, se
             <Label className="text-16 font-bold text-white-1">
               AI Prompt to generate Thumbnail
             </Label>
-            <Textarea 
+            <Textarea
               className="input-class font-light focus-visible:ring-offset-orange-1"
               placeholder='Provide text to generate thumbnail'
               rows={5}
@@ -113,45 +130,45 @@ const GenerateThumbnail = ({ setImage, setImageStorageId, image, imagePrompt, se
             />
           </div>
           <div className="w-full max-w-[200px]">
-          <Button type="submit" className="text-16 bg-orange-1 py-4 font-bold text-black-1" onClick={generateImage}>
-            {isImageLoading ? (
-              <>
-                Generating
-                <Loader size={20} className="animate-spin ml-2" />
-              </>
-            ) : (
-              'Generate'
-            )}
-          </Button>
+            <Button type="button" className="text-16 bg-orange-1 py-4 font-bold text-black-1" onClick={generateImage}>
+              {isImageLoading ? (
+                <>
+                  Generating
+                  <Loader size={20} className="animate-spin ml-2" />
+                </>
+              ) : (
+                'Generate'
+              )}
+            </Button>
           </div>
         </div>
       ) : (
         <div className="image_div" onClick={() => imageRef?.current?.click()}>
-          <Input 
+          <Input
             type="file"
             className="hidden"
             ref={imageRef}
-            onChange={(e) => uploadImage(e)}
+            onChange={uploadImage}
           />
           {!isImageLoading ? (
             <Image src="/icons/upload-image.svg" width={40} height={40} alt="upload" />
-          ): (
+          ) : (
             <div className="text-16 flex-center font-medium text-white-1">
               Uploading
               <Loader size={20} className="animate-spin ml-2" />
             </div>
           )}
           <div className="flex flex-col items-center gap-1">
-           <h2 className="text-12 font-bold text-orange-1">
-            Click to upload
+            <h2 className="text-12 font-bold text-orange-1">
+              Click to upload
             </h2>
-            <p className="text-12 font-normal text-gray-1">SVG, PNG, JPG, or GIF (max. 1080x1080px)</p> 
+            <p className="text-12 font-normal text-gray-1">SVG, PNG, JPG, or GIF (max. 1080x1080px)</p>
           </div>
         </div>
       )}
       {image && (
         <div className="flex-center w-full">
-          <Image 
+          <Image
             src={image}
             width={200}
             height={200}
@@ -161,7 +178,7 @@ const GenerateThumbnail = ({ setImage, setImageStorageId, image, imagePrompt, se
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
-export default GenerateThumbnail
+export default GenerateThumbnail;
